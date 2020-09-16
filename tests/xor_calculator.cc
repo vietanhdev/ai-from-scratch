@@ -7,7 +7,7 @@
 #include "layers/dense.h"
 #include "layers/sigmoid.h"
 #include "layers/utils.h"
-#include "losses/cross_entropy_loss.h"
+#include "losses/mse_loss.h"
 
 using namespace afs;
 using namespace std;
@@ -26,22 +26,24 @@ int main(int argc, char **argv) {
   }
 
   const size_t kTrainDataSize = train_data.size();
-  const double kLearningRate = 0.001;
-  const size_t kEpochs = 10;
+  const double kLearningRate = 1.0;
+  const size_t kEpochs = 5000;
   const size_t kBatchSize = 1;
   const size_t kNumBatches = kTrainDataSize / kBatchSize;
 
   Dense d1(2, 4);
+  Sigmoid s1(4);
   Dense d2(4, 1);
-  Sigmoid s(1);
+  Sigmoid s2(1);
 
-  CrossEntropyLoss l(1);
+  MSELoss l;
 
   // Initialize armadillo structures to store intermediate outputs (Ie. outputs
   // of hidden layers)
   arma::vec d1_out = arma::zeros(4);
+  arma::vec s1_out = arma::zeros(4);
   arma::vec d2_out = arma::zeros(1);
-  arma::vec s_out = arma::zeros(1);
+  arma::vec s2_out = arma::zeros(1);
 
   // Initialize loss and cumulative loss. Cumulative loss totals loss over all
   // training examples in a minibatch.
@@ -58,23 +60,26 @@ int main(int argc, char **argv) {
       for (size_t i = 0; i < kBatchSize; i++) {
         // Forward pass
         d1.Forward(train_data[batch_idx * kBatchSize + i], d1_out);
-        d2.Forward(d1_out, d2_out);
-        s.Forward(d2_out, s_out);
+        s1.Forward(d1_out, s1_out);
+        d2.Forward(s1_out, d2_out);
+        s2.Forward(d2_out, s2_out);
 
         // Compute the loss
-        loss = l.Forward(s_out, train_labels[batch_idx * kBatchSize + i]);
+        loss = l.Forward(s2_out, train_labels[batch_idx * kBatchSize + i]);
         mini_batch_loss += loss;
 
         // Backward pass
         l.Backward();
         arma::vec grad_wrt_predicted_distribution =
             l.GetGradientWrtPredictedDistribution();
-        s.Backward(grad_wrt_predicted_distribution);
-        arma::vec grad_wrt_s_in = s.GetGradientWrtInput();
-        d2.Backward(grad_wrt_s_in);
-        arma::vec grad_wrt_d2_in = d2.GetGradientWrtInput();
-        d1.Backward(grad_wrt_d2_in);
-        arma::vec grad_wrt_d1_in = d1.GetGradientWrtInput();
+        s2.Backward(grad_wrt_predicted_distribution);
+        arma::vec s2_grad = s2.GetGradientWrtInput();
+        d2.Backward(s2_grad);
+        arma::vec d2_grad = d2.GetGradientWrtInput();
+        s1.Backward(d2_grad);
+        arma::vec s1_grad = s1.GetGradientWrtInput();
+        d1.Backward(s1_grad);
+        arma::vec d1_grad = d1.GetGradientWrtInput();
       }
       epoch_loss += mini_batch_loss;
 
@@ -96,15 +101,16 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < kTrainDataSize; i++) {
       // Forward pass
       d1.Forward(train_data[i], d1_out);
-      d2.Forward(d1_out, d2_out);
-      s.Forward(d2_out, s_out);
-
+      s1.Forward(d1_out, s1_out);
+      d2.Forward(s1_out, d2_out);
+      s2.Forward(d2_out, s2_out);
+    
       cout << (int)train_data[i][0]
             << " XOR " << (int)train_data[i][1]
-            << " = " << s_out[0] << " ~ " << (int)train_labels[i].index_max()
+            << " = " << s2_out[0] << " ~ " << (int)train_labels[i][0]
             << endl;
 
-      if ((int)train_labels[i][0] == (int)(s_out[0] > 0.5)) {
+      if ((int)train_labels[i][0] == (int)(s2_out[0] > 0.5)) {
         correct += 1.0;
       }
 
