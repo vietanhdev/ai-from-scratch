@@ -15,7 +15,7 @@ void Sigmoid::Forward(const arma::vec& input, arma::vec& output) {
 }
 
 void Sigmoid::Backward(arma::vec& upstream_gradient) {
-  grad_wrt_input = this->output * (1.0 - this->output);
+  grad_wrt_input = this->output % (1.0 - this->output) % upstream_gradient;
 }
 
 arma::vec Sigmoid::GetGradientWrtInput() { return grad_wrt_input; }
