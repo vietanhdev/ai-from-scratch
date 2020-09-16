@@ -10,6 +10,7 @@
 #include "layers/max_pooling.h"
 #include "layers/relu.h"
 #include "layers/softmax.h"
+#include "layers/utils.h"
 #include "losses/cross_entropy_loss.h"
 
 using namespace afs;
@@ -38,9 +39,9 @@ int main(int argc, char **argv) {
   const size_t kTrainDataSize = train_data.size();
   const size_t kValidDataSize = validation_data.size();
   const size_t kTestDataSize = test_data.size();
-  const double kLearningRate = 0.001;
+  const double kLearningRate = 0.01;
   const size_t kEpochs = 10;
-  const size_t kBatchSize = 32;
+  const size_t kBatchSize = 16;
   const size_t kNumBatches = kTrainDataSize / kBatchSize;
 
   // Define the network layers
@@ -62,7 +63,7 @@ int main(int argc, char **argv) {
   MaxPooling mp2(8, 8, 16, 2, 2, 2, 2);
   // Output is 4 x 4 x 16
 
-  Dense d(4, 4, 16, 10);
+  Dense d(4 * 4 * 16, 10);
   // Output is a vector of size 10
 
   Softmax s(10);
@@ -78,6 +79,7 @@ int main(int argc, char **argv) {
   arma::cube c2_out = arma::zeros(8, 8, 16);
   arma::cube r2_out = arma::zeros(8, 8, 16);
   arma::cube mp2_out = arma::zeros(4, 4, 16);
+  arma::vec d_in = arma::zeros(4 * 4 * 16);
   arma::vec d_out = arma::zeros(10);
   arma::vec s_out = arma::zeros(10);
 
@@ -88,7 +90,8 @@ int main(int argc, char **argv) {
   double mini_batch_loss;
 
   for (size_t epoch = 0; epoch < kEpochs; epoch++) {
-    std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":" << std::endl;
+    std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":"
+              << std::endl;
 
     for (size_t batch_idx = 0; batch_idx < kNumBatches; batch_idx++) {
       mini_batch_loss = 0.0;
@@ -100,7 +103,8 @@ int main(int argc, char **argv) {
         c2.Forward(mp1_out, c2_out);
         r2.Forward(c2_out, r2_out);
         mp2.Forward(r2_out, mp2_out);
-        d.Forward(mp2_out, d_out);
+        d_in = Utils::FlattenCube(mp2_out);
+        d.Forward(d_in, d_out);
         d_out /= 100;
         s.Forward(d_out, s_out);
 
@@ -115,7 +119,10 @@ int main(int argc, char **argv) {
         s.Backward(grad_wrt_predicted_distribution);
         arma::vec grad_wrt_s_in = s.GetGradientWrtInput();
         d.Backward(grad_wrt_s_in);
-        arma::cube grad_wrt_d_in = d.GetGradientWrtInput();
+        arma::vec grad_wrt_d_in_vec = d.GetGradientWrtInput();
+        arma::cube grad_wrt_d_in =
+            Utils::VecToCube(grad_wrt_d_in_vec, mp2.output.n_rows,
+                             mp2.output.n_cols, mp2.output.n_slices);
         mp2.Backward(grad_wrt_d_in);
         arma::cube grad_wrt_mp2_in = mp2.GetGradientWrtInput();
         r2.Backward(grad_wrt_mp2_in);
@@ -155,7 +162,8 @@ int main(int argc, char **argv) {
       c2.Forward(mp1_out, c2_out);
       r2.Forward(c2_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
-      d.Forward(mp2_out, d_out);
+      d_in = Utils::FlattenCube(mp2_out);
+      d.Forward(d_in, d_out);
       d_out /= 100;
       s.Forward(d_out, s_out);
 
@@ -176,7 +184,8 @@ int main(int argc, char **argv) {
       c2.Forward(mp1_out, c2_out);
       r2.Forward(c2_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
-      d.Forward(mp2_out, d_out);
+      d_in = Utils::FlattenCube(mp2_out);
+      d.Forward(d_in, d_out);
       d_out /= 100;
       s.Forward(d_out, s_out);
 
@@ -196,26 +205,26 @@ int main(int argc, char **argv) {
     // Reset cumulative loss and correct count
     epoch_loss = 0.0;
     correct = 0.0;
-
-    // Write results on test data to results csv
-    std::fstream fout("results_epoch_" + std::to_string(epoch) + ".csv",
-                      std::ios::out);
-    fout << "ImageId,Label" << std::endl;
-    for (size_t i = 0; i < kTestDataSize; i++) {
-      // Forward pass
-      c1.Forward(test_data[i], c1_out);
-      r1.Forward(c1_out, r1_out);
-      mp1.Forward(r1_out, mp1_out);
-      c2.Forward(mp1_out, c2_out);
-      r2.Forward(c2_out, r2_out);
-      mp2.Forward(r2_out, mp2_out);
-      d.Forward(mp2_out, d_out);
-      d_out /= 100;
-      s.Forward(d_out, s_out);
-
-      fout << std::to_string(i + 1) << "," << std::to_string(s_out.index_max())
-           << std::endl;
-    }
-    fout.close();
   }
+
+  // Write results on test data to results csv
+  // std::fstream fout("results_epoch_" + std::to_string(epoch) + ".csv",
+  //                   std::ios::out);
+  // fout << "ImageId,Label" << std::endl;
+  // for (size_t i = 0; i < kTestDataSize; i++) {
+  //   // Forward pass
+  //   c1.Forward(test_data[i], c1_out);
+  //   r1.Forward(c1_out, r1_out);
+  //   mp1.Forward(r1_out, mp1_out);
+  //   c2.Forward(mp1_out, c2_out);
+  //   r2.Forward(c2_out, r2_out);
+  //   mp2.Forward(r2_out, mp2_out);
+  //   d.Forward(mp2_out, d_out);
+  //   d_out /= 100;
+  //   s.Forward(d_out, s_out);
+
+  //   fout << std::to_string(i + 1) << "," << std::to_string(s_out.index_max())
+  //         << std::endl;
+  // }
+  // fout.close();
 }

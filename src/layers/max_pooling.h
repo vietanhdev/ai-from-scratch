@@ -20,9 +20,9 @@ namespace afs
     size_t vertical_stride;
     size_t horizontal_stride;
 
+  public:
     arma::cube input;
     arma::cube output;
-
     arma::cube gradient_wrt_input;
 
   public:

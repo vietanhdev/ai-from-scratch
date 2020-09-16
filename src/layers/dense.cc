@@ -9,14 +9,10 @@
 
 namespace afs {
 
-Dense::Dense(size_t input_height, size_t input_width, size_t input_depth,
-             size_t num_outputs)
-    : input_height(input_height),
-      input_width(input_width),
-      input_depth(input_depth),
-      num_outputs(num_outputs) {
+Dense::Dense(size_t num_inputs, size_t num_outputs)
+    : num_inputs(num_inputs), num_outputs(num_outputs) {
   // Initialize the weights.
-  weights = arma::zeros(num_outputs, input_height * input_width * input_depth);
+  weights = arma::zeros(num_outputs, num_inputs);
   weights = weights.imbue([&]() { return Initializer::GetStdNormRandom(); });
 
   // Initialize the biases
@@ -26,10 +22,9 @@ Dense::Dense(size_t input_height, size_t input_width, size_t input_depth,
   ResetGradient();
 }
 
-void Dense::Forward(arma::cube& input, arma::vec& output) {
-  // Flatten the input first
-  arma::vec flattened = arma::vectorise(input);
-  output = (weights * flattened) + biases;
+void Dense::Forward(arma::vec& input, arma::vec& output) {
+
+  output = (weights * input) + biases;
 
   // Save input, output for calculating gradient
   this->input = input;
@@ -37,21 +32,20 @@ void Dense::Forward(arma::cube& input, arma::vec& output) {
 }
 
 void Dense::Backward(arma::vec& upstream_gradient) {
-  arma::vec gradInputVec =
-      arma::zeros(input_height * input_width * input_depth);
-  for (size_t i = 0; i < (input_height * input_width * input_depth); i++) {
-    gradInputVec[i] = arma::dot(weights.col(i), upstream_gradient);
+  // Calculate input gradient
+  arma::vec grad_input_vec = arma::zeros(num_inputs);
+  for (size_t i = 0; i < num_inputs; i++) {
+    grad_input_vec[i] = arma::dot(weights.col(i), upstream_gradient);
   }
 
-  arma::cube tmp((input_height * input_width * input_depth), 1, 1);
-  tmp.slice(0).col(0) = gradInputVec;
-  grad_input = arma::reshape(tmp, input_height, input_width, input_depth);
+  grad_input = grad_input_vec;
+  accumulated_grad_input += grad_input_vec;
 
-  accumulated_grad_input += grad_input;
-
+  // Calculate weight gradient
   grad_weights = arma::zeros(arma::size(weights));
-  for (size_t i = 0; i < grad_weights.n_rows; i++)
+  for (size_t i = 0; i < grad_weights.n_rows; i++) {
     grad_weights.row(i) = vectorise(input).t() * upstream_gradient[i];
+  }
 
   accumulated_grad_weights += grad_weights;
 
@@ -66,9 +60,8 @@ void Dense::UpdateWeightsAndBiases(size_t batch_size, double learning_rate) {
 }
 
 void Dense::ResetGradient() {
-  accumulated_grad_input = arma::zeros(input_height, input_width, input_depth);
-  accumulated_grad_weights =
-      arma::zeros(num_outputs, input_height * input_width * input_depth);
+  accumulated_grad_input = arma::zeros(num_inputs);
+  accumulated_grad_weights = arma::zeros(num_outputs, num_inputs);
   accumulated_grad_biases = arma::zeros(num_outputs);
 }
 

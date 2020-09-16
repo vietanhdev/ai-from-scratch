@@ -1,12 +1,12 @@
-#ifndef SOFTMAX_H_
-#define SOFTMAX_H_
+#ifndef SIGMOID_H_
+#define SIGMOID_H_
 
 #include <armadillo>
 #include <iostream>
 
 namespace afs {
 
-class Softmax {
+class Sigmoid {
  private:
   size_t num_inputs;
   arma::vec input;
@@ -15,8 +15,8 @@ class Softmax {
   arma::vec grad_wrt_input;
 
  public:
-  Softmax(size_t num_inputs);
-  void Forward(arma::vec& input, arma::vec& output);
+  Sigmoid(size_t num_inputs);
+  void Forward(const arma::vec& input, arma::vec& output);
   void Backward(arma::vec& upstream_gradient);
   arma::vec GetGradientWrtInput();
 };

@@ -8,34 +8,39 @@
 
 class MNISTData {
  public:
-  MNISTData(std::string data_dir, double split_ratio = 0.9) {
+  MNISTData(const std::string data_dir, double split_ratio = 0.9,
+            size_t max_n_train_samples = 0, bool use_train_for_val = false) {
     assert(split_ratio <= 1 && split_ratio >= 0);
     this->data_dir = data_dir;
     train_file = data_dir + "/train.csv";
     test_file = data_dir + "/test.csv";
 
-    arma::mat train_data_eaw;
+    arma::mat train_data_raw;
 
-    train_data_eaw.load(train_file, arma::csv_ascii);
-    train_data_eaw = train_data_eaw.submat(1, 0, train_data_eaw.n_rows - 1,
-                                       train_data_eaw.n_cols - 1);
-
-    int num_examples = train_data_eaw.n_rows;
+    train_data_raw.load(train_file, arma::csv_ascii);
+    train_data_raw = train_data_raw.submat(1, 0, train_data_raw.n_rows - 1,
+                                           train_data_raw.n_cols - 1);
 
     std::vector<arma::cube> train_data_all;
     std::vector<arma::vec> train_labels_all;
-    for (size_t idx = 0; idx < train_data_eaw.n_rows; idx++) {
-      int label = (int)(train_data_eaw.row(idx)(0));
+    for (size_t idx = 0; idx < train_data_raw.n_rows; idx++) {
+      int label = (int)(train_data_raw.row(idx)(0));
       arma::cube img(28, 28, 1, arma::fill::zeros);
       for (size_t r = 0; r < 28; r++)
         img.slice(0).row(r) =
-            train_data_eaw.row(idx).subvec(28 * r + 1, 28 * r + 28);
+            train_data_raw.row(idx).subvec(28 * r + 1, 28 * r + 28);
       img.slice(0) = arma::normalise(img.slice(0));
       train_data_all.push_back(img);
       arma::vec labelvec(10, arma::fill::zeros);
       labelvec(label) += 1.0;
       train_labels_all.push_back(labelvec);
+
+      if (max_n_train_samples != 0 &&
+          max_n_train_samples <= train_data_all.size())
+        break;
     }
+
+    int num_examples = train_data_all.size();
 
     // Shuffle the data
     std::vector<arma::cube> train_data_all_shuffled;
@@ -51,28 +56,38 @@ class MNISTData {
     train_data_all = train_data_all_shuffled;
     train_labels_all = train_labels_all_shuffled;
 
+    // Split train_data_all and train_labels_all into train and validation
+    // parts.
+    if (!use_train_for_val) {
+      train_data = std::vector<arma::cube>(
+          train_data_all.begin(),
+          train_data_all.begin() + num_examples * split_ratio);
+      train_labels = std::vector<arma::vec>(
+          train_labels_all.begin(),
+          train_labels_all.begin() + num_examples * split_ratio);
 
-    // Split train_data_all and train_labels_all into train and validation parts.
-    train_data = std::vector<arma::cube>(
-        train_data_all.begin(), train_data_all.begin() + num_examples * split_ratio);
-    train_labels = std::vector<arma::vec>(
-        train_labels_all.begin(),
-        train_labels_all.begin() + num_examples * split_ratio);
-
-    validation_data = std::vector<arma::cube>(
-        train_data_all.begin() + num_examples * split_ratio, train_data_all.end());
-    validation_labels = std::vector<arma::vec>(
-        train_labels_all.begin() + num_examples * split_ratio,
-        train_labels_all.end());
+      validation_data = std::vector<arma::cube>(
+          train_data_all.begin() + num_examples * split_ratio,
+          train_data_all.end());
+      validation_labels = std::vector<arma::vec>(
+          train_labels_all.begin() + num_examples * split_ratio,
+          train_labels_all.end());
+    } else {
+      train_data = train_data_all;
+      train_labels = train_labels_all;
+      validation_data = train_data_all;
+      validation_labels = train_labels_all;
+    }
 
     arma::mat test_data_raw;
     test_data_raw.load(test_file, arma::csv_ascii);
     test_data_raw = test_data_raw.submat(1, 0, test_data_raw.n_rows - 1,
-                                     test_data_raw.n_cols - 1);
+                                         test_data_raw.n_cols - 1);
     for (size_t idx = 0; idx < test_data_raw.n_rows; idx++) {
       arma::cube img(28, 28, 1, arma::fill::zeros);
       for (size_t r = 0; r < 28; r++)
-        img.slice(0).row(r) = test_data_raw.row(idx).subvec(28 * r, 28 * r + 27);
+        img.slice(0).row(r) =
+            test_data_raw.row(idx).subvec(28 * r, 28 * r + 27);
       img.slice(0) /= 255.0;
       test_data.push_back(img);
     }
