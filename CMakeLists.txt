@@ -14,6 +14,10 @@ add_executable(xor_calculator tests/xor_calculator.cc
                 ${CC_SOURCES})
 target_link_libraries(xor_calculator armadillo)
 
+add_executable(wine_quality_estimator tests/wine_quality_estimator.cc
+                ${CC_SOURCES})
+target_link_libraries(wine_quality_estimator armadillo)
+
 add_executable(train_lenet tests/train_lenet.cc
                 ${CC_SOURCES})
 target_link_libraries(train_lenet armadillo)
