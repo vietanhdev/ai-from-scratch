@@ -12,6 +12,7 @@
 #include "layers/softmax.h"
 #include "layers/utils.h"
 #include "losses/cross_entropy_loss.h"
+#include "utils/visualizer.h"
 
 using namespace afs;
 using namespace std;
@@ -88,6 +89,7 @@ int main(int argc, char **argv) {
   double loss;
   double epoch_loss = 0.0;
   double mini_batch_loss;
+  std::vector<double> train_loss_history;
 
   for (size_t epoch = 0; epoch < kEpochs; epoch++) {
     std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":"
@@ -137,6 +139,9 @@ int main(int argc, char **argv) {
         arma::cube grad_wrt_c1_in = c1.GetGradientWrtInput();
       }
       epoch_loss += mini_batch_loss;
+
+      train_loss_history.push_back(mini_batch_loss / kBatchSize);
+      Visualizer::PlotGraph(train_loss_history, "Loss");
 
       std::cout << '\r' << "Batch " << batch_idx + 1 << "/" << kNumBatches
                 << " Batch loss: " << mini_batch_loss << std::flush;
@@ -206,6 +211,8 @@ int main(int argc, char **argv) {
     epoch_loss = 0.0;
     correct = 0.0;
   }
+
+  cv::waitKey(0);
 
   // Write results on test data to results csv
   // std::fstream fout("results_epoch_" + std::to_string(epoch) + ".csv",
