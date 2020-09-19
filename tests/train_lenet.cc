@@ -10,9 +10,9 @@
 #include "layers/max_pooling.h"
 #include "layers/relu.h"
 #include "layers/softmax.h"
-#include "layers/utils.h"
 #include "losses/cross_entropy_loss.h"
 #include "utils/visualizer.h"
+#include "utils/data_transformer.h"
 
 using namespace afs;
 using namespace std;
@@ -80,7 +80,6 @@ int main(int argc, char **argv) {
   arma::cube c2_out = arma::zeros(8, 8, 16);
   arma::cube r2_out = arma::zeros(8, 8, 16);
   arma::cube mp2_out = arma::zeros(4, 4, 16);
-  arma::vec d_in = arma::zeros(4 * 4 * 16);
   arma::vec d_out = arma::zeros(10);
   arma::vec s_out = arma::zeros(10);
 
@@ -105,8 +104,7 @@ int main(int argc, char **argv) {
         c2.Forward(mp1_out, c2_out);
         r2.Forward(c2_out, r2_out);
         mp2.Forward(r2_out, mp2_out);
-        d_in = Utils::FlattenCube(mp2_out);
-        d.Forward(d_in, d_out);
+        d.Forward(mp2_out, d_out);
         d_out /= 100;
         s.Forward(d_out, s_out);
 
@@ -123,7 +121,7 @@ int main(int argc, char **argv) {
         d.Backward(grad_wrt_s_in);
         arma::vec grad_wrt_d_in_vec = d.GetGradientWrtInput();
         arma::cube grad_wrt_d_in =
-            Utils::VecToCube(grad_wrt_d_in_vec, mp2.output.n_rows,
+            DataTransformer::VecToCube(grad_wrt_d_in_vec, mp2.output.n_rows,
                              mp2.output.n_cols, mp2.output.n_slices);
         mp2.Backward(grad_wrt_d_in);
         arma::cube grad_wrt_mp2_in = mp2.GetGradientWrtInput();
@@ -167,8 +165,7 @@ int main(int argc, char **argv) {
       c2.Forward(mp1_out, c2_out);
       r2.Forward(c2_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
-      d_in = Utils::FlattenCube(mp2_out);
-      d.Forward(d_in, d_out);
+      d.Forward(mp2_out, d_out);
       d_out /= 100;
       s.Forward(d_out, s_out);
 
@@ -189,8 +186,7 @@ int main(int argc, char **argv) {
       c2.Forward(mp1_out, c2_out);
       r2.Forward(c2_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
-      d_in = Utils::FlattenCube(mp2_out);
-      d.Forward(d_in, d_out);
+      d.Forward(mp2_out, d_out);
       d_out /= 100;
       s.Forward(d_out, s_out);
 
@@ -210,28 +206,29 @@ int main(int argc, char **argv) {
     // Reset cumulative loss and correct count
     epoch_loss = 0.0;
     correct = 0.0;
+
+    // Write results on test data to results csv
+    std::fstream fout("lenet_" + std::to_string(epoch) + ".csv",
+                      std::ios::out);
+    fout << "ImageId,Label" << std::endl;
+    for (size_t i = 0; i < kTestDataSize; i++) {
+      // Forward pass
+      c1.Forward(test_data[i], c1_out);
+      r1.Forward(c1_out, r1_out);
+      mp1.Forward(r1_out, mp1_out);
+      c2.Forward(mp1_out, c2_out);
+      r2.Forward(c2_out, r2_out);
+      mp2.Forward(r2_out, mp2_out);
+      d.Forward(mp2_out, d_out);
+      d_out /= 100;
+      s.Forward(d_out, s_out);
+
+      fout << std::to_string(i + 1) << "," << std::to_string(s_out.index_max())
+            << std::endl;
+    }
+    fout.close();
   }
 
   cv::waitKey(0);
 
-  // Write results on test data to results csv
-  // std::fstream fout("results_epoch_" + std::to_string(epoch) + ".csv",
-  //                   std::ios::out);
-  // fout << "ImageId,Label" << std::endl;
-  // for (size_t i = 0; i < kTestDataSize; i++) {
-  //   // Forward pass
-  //   c1.Forward(test_data[i], c1_out);
-  //   r1.Forward(c1_out, r1_out);
-  //   mp1.Forward(r1_out, mp1_out);
-  //   c2.Forward(mp1_out, c2_out);
-  //   r2.Forward(c2_out, r2_out);
-  //   mp2.Forward(r2_out, mp2_out);
-  //   d.Forward(mp2_out, d_out);
-  //   d_out /= 100;
-  //   s.Forward(d_out, s_out);
-
-  //   fout << std::to_string(i + 1) << "," << std::to_string(s_out.index_max())
-  //         << std::endl;
-  // }
-  // fout.close();
 }

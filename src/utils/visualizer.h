@@ -16,6 +16,8 @@ class Visualizer {
     cv::transpose(data, data);
     cv::Ptr<cv::plot::Plot2d> plot = cv::plot::Plot2d::create(data);
     plot->setInvertOrientation(true);
+    plot->setNeedPlotLine(true);
+    plot->setShowText(true);
 
     // Render Plot Image
     cv::Mat image;

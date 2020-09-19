@@ -61,20 +61,6 @@ class WineQualityData {
     validation_labels = std::vector<arma::vec>(
         train_labels_all.begin() + num_examples * split_ratio,
         train_labels_all.end());
-
-    // TODO (vietanhdev): Add code to load test set
-    // arma::mat test_data_raw;
-    // test_data_raw.load(test_file, arma::csv_ascii);
-    // test_data_raw = test_data_raw.submat(1, 0, test_data_raw.n_rows - 1,
-    //                                      test_data_raw.n_cols - 1);
-    // for (size_t idx = 0; idx < test_data_raw.n_rows; idx++) {
-    //   arma::cube img(28, 28, 1, arma::fill::zeros);
-    //   for (size_t r = 0; r < 28; r++)
-    //     img.slice(0).row(r) =
-    //         test_data_raw.row(idx).subvec(28 * r, 28 * r + 27);
-    //   img.slice(0) /= 255.0;
-    //   test_data.push_back(img);
-    // }
   }
 
   std::vector<arma::vec> getTrainData() { return train_data; }

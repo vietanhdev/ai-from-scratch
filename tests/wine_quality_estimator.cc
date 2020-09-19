@@ -10,9 +10,9 @@
 #include "datasets/wine_quality.h"
 #include "layers/dense.h"
 #include "layers/sigmoid.h"
-#include "layers/utils.h"
 #include "losses/mse_loss.h"
 #include "utils/visualizer.h"
+#include "utils/data_transformer.h"
 
 using namespace afs;
 using namespace std;
@@ -39,8 +39,8 @@ int main(int argc, char **argv) {
 
   const size_t kTrainDataSize = train_data.size();
   const size_t kValidDataSize = validation_data.size();
-  const double kLearningRate = 0.01;
-  const size_t kEpochs = 100;
+  const double kLearningRate = 0.001;
+  const size_t kEpochs = 16;
   const size_t kBatchSize = 32;
   const size_t kNumBatches = kTrainDataSize / kBatchSize;
 
@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
   double mini_batch_loss;
 
   std::vector<double> loss_history;
+  std::vector<double> val_loss_history;
 
   for (size_t epoch = 0; epoch < kEpochs; epoch++) {
     epoch_loss = 0.0;
@@ -94,6 +95,8 @@ int main(int argc, char **argv) {
         arma::vec d1_grad = d1.GetGradientWrtInput();
       }
       epoch_loss += mini_batch_loss;
+      loss_history.push_back(mini_batch_loss / kBatchSize);
+      Visualizer::PlotGraph(loss_history, "Loss");
 
       std::cout << '\r' << "Batch " << batch_idx + 1 << "/" << kNumBatches
                 << " Batch loss: " << mini_batch_loss << std::flush;
@@ -124,10 +127,6 @@ int main(int argc, char **argv) {
     // Output accuracy on training dataset after each epoch
     std::cout << "Training accuracy: " << correct / kTrainDataSize << std::endl;
 
-    std::cout << epoch_loss << std::endl;
-    loss_history.push_back((float)epoch_loss);
-    Visualizer::PlotGraph(loss_history, "Loss");
-
     // Compute validation accuracy after epoch
     epoch_loss = 0.0;
     correct = 0.0;
@@ -147,7 +146,10 @@ int main(int argc, char **argv) {
     }
 
     // Output validation loss after each epoch
-    std::cout << "Validation loss: " << epoch_loss / (kBatchSize * kNumBatches)
+    double avg_loss_on_sample = epoch_loss / (kBatchSize * kNumBatches);
+    val_loss_history.push_back(avg_loss_on_sample);
+    Visualizer::PlotGraph(val_loss_history, "Val Loss");
+    std::cout << "Validation loss: " << avg_loss_on_sample
               << std::endl;
 
     // Output validation accuracy after each epoch

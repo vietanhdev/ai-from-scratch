@@ -31,9 +31,9 @@ class Conv2D {
 
  public:
   Conv2D(size_t input_height, size_t input_width, size_t input_depth,
-                 size_t filter_height, size_t filter_width,
-                 size_t horizontal_stride, size_t vertical_stride,
-                 size_t num_filters);
+         size_t filter_height, size_t filter_width, size_t horizontal_stride,
+         size_t vertical_stride, size_t num_filters,
+         const std::string& weight_initializer = "he");
   void Forward(arma::cube& input, arma::cube& output);
   void Backward(arma::cube& upstream_gradient);
   void UpdateFilterWeights(size_t batch_size, double learning_rate);
@@ -44,8 +44,6 @@ class Conv2D {
 
  private:
   void ResetGradient();
-
-
 };
 
 }  // namespace afs

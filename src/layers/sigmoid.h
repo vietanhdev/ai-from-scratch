@@ -17,7 +17,7 @@ class Sigmoid {
  public:
   Sigmoid(size_t num_inputs);
   void Forward(const arma::vec& input, arma::vec& output);
-  void Backward(arma::vec& upstream_gradient);
+  void Backward(const arma::vec& upstream_gradient);
   arma::vec GetGradientWrtInput();
 };
 

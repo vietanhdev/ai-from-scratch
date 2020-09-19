@@ -18,7 +18,7 @@ class ReLU {
   arma::cube input;
   arma::cube output;
 
-  arma::cube gradient_wrt_input;
+  arma::cube grad_input;
 
  public:
   ReLU(size_t input_height, size_t input_width, size_t input_depth);

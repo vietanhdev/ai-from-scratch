@@ -1,12 +1,12 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef DATA_TRANSFORMER_H_
+#define DATA_TRANSFORMER_H_
 
 #include <armadillo>
 #include <iostream>
 
 namespace afs {
 
-class Utils {
+class DataTransformer {
  public:
   static arma::cube VecToCube(arma::vec vec_in, size_t n_rows, size_t n_cols, size_t n_slices) {
     arma::cube tmp((n_rows * n_cols * n_slices), 1, 1);

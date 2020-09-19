@@ -12,9 +12,11 @@ class Dense {
  public:
 
   // Construct dense (fully connected layer)
-  Dense(size_t num_inputs, size_t num_outputs);
+  Dense(size_t num_inputs, size_t num_outputs,
+       const std::string &weight_initializer="xavier");
 
-  void Forward(arma::vec& input, arma::vec& output);
+  void Forward(const arma::vec& input, arma::vec& output);
+  void Forward(const arma::cube& input, arma::vec& output);
   void Backward(arma::vec& upstream_gradient);
   arma::vec GetGradientWrtInput() { return grad_input; }
   void UpdateWeightsAndBiases(size_t batch_size, double learning_rate);

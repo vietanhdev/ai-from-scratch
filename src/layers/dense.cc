@@ -1,19 +1,16 @@
 #include "dense.h"
 
-#include <armadillo>
-#include <cassert>
-#include <cmath>
-#include <vector>
-
-#include "initializer.h"
+#include "utils/weight_initializer.h"
+#include "utils/data_transformer.h"
 
 namespace afs {
 
-Dense::Dense(size_t num_inputs, size_t num_outputs)
+Dense::Dense(size_t num_inputs, size_t num_outputs, const std::string &weight_initializer)
     : num_inputs(num_inputs), num_outputs(num_outputs) {
   // Initialize the weights.
+  WeightInitializer w_initializer("xavier", num_inputs);
   weights = arma::zeros(num_outputs, num_inputs);
-  weights = weights.imbue([&]() { return Initializer::GetStdNormRandom(); });
+  weights = weights.imbue([&]() { return w_initializer.GetRandomWeight(); });
 
   // Initialize the biases
   biases = arma::zeros(num_outputs);
@@ -22,8 +19,12 @@ Dense::Dense(size_t num_inputs, size_t num_outputs)
   ResetGradient();
 }
 
-void Dense::Forward(arma::vec& input, arma::vec& output) {
+void Dense::Forward(const arma::cube& input, arma::vec& output) {
+  arma::vec input_vec = DataTransformer::FlattenCube(input);
+  Dense::Forward(input_vec, output);
+}
 
+void Dense::Forward(const arma::vec& input, arma::vec& output) {
   output = (weights * input) + biases;
 
   // Save input, output for calculating gradient
@@ -33,22 +34,20 @@ void Dense::Forward(arma::vec& input, arma::vec& output) {
 
 void Dense::Backward(arma::vec& upstream_gradient) {
   // Calculate input gradient
-  arma::vec grad_input_vec = arma::zeros(num_inputs);
+  grad_input = arma::zeros(num_inputs);
   for (size_t i = 0; i < num_inputs; i++) {
-    grad_input_vec[i] = arma::dot(weights.col(i), upstream_gradient);
+    grad_input[i] = arma::dot(weights.col(i), upstream_gradient);
   }
-
-  grad_input = grad_input_vec;
-  accumulated_grad_input += grad_input_vec;
+  accumulated_grad_input += grad_input;
 
   // Calculate weight gradient
   grad_weights = arma::zeros(arma::size(weights));
   for (size_t i = 0; i < grad_weights.n_rows; i++) {
     grad_weights.row(i) = vectorise(input).t() * upstream_gradient[i];
   }
-
   accumulated_grad_weights += grad_weights;
 
+  // Calculate biases gradient
   grad_biases = upstream_gradient;
   accumulated_grad_biases += grad_biases;
 }

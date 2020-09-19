@@ -16,8 +16,8 @@ class Softmax {
 
  public:
   Softmax(size_t num_inputs);
-  void Forward(arma::vec& input, arma::vec& output);
-  void Backward(arma::vec& upstream_gradient);
+  void Forward(const arma::vec& input, arma::vec& output);
+  void Backward(const arma::vec& upstream_gradient);
   arma::vec GetGradientWrtInput();
 };
 

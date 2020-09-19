@@ -1,5 +1,5 @@
-#ifndef INITIALIZER_H_
-#define INITIALIZER_H_
+#ifndef RANDOM_GENERATOR_H_
+#define RANDOM_GENERATOR_H_
 
 #include <cmath>
 #include <iomanip>
@@ -10,7 +10,8 @@
 
 namespace afs {
 
-class Initializer {
+class RandomGenerator {
+
  public:
   static double GetStdNormRandom() {
     std::random_device rd{};
@@ -18,8 +19,9 @@ class Initializer {
     std::normal_distribution<> d{0, 1};
     return d(gen);
   }
+
 };
 
-}  // namespace afs
+};  // namespace afs
 
 #endif

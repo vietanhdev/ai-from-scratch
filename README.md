@@ -1,5 +1,11 @@
 # CNN from Scratch
 
+## I. Layers
+
+
+
+## II. Examples
+
 https://www.kaggle.com/c/digit-recognizer/data
 
 ## XOR Calculator

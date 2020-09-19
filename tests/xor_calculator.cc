@@ -6,7 +6,7 @@
 
 #include "layers/dense.h"
 #include "layers/sigmoid.h"
-#include "layers/utils.h"
+#include "utils/data_transformer.h"
 #include "losses/mse_loss.h"
 
 using namespace afs;
