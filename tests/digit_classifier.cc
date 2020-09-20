@@ -90,13 +90,13 @@ int main(int argc, char **argv) {
   double mini_batch_loss;
   std::vector<double> train_loss_history;
 
-  for (size_t epoch = 0; epoch < kEpochs; epoch++) {
+  for (size_t epoch = 0; epoch < kEpochs; ++epoch) {
     std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":"
               << std::endl;
 
-    for (size_t batch_idx = 0; batch_idx < kNumBatches; batch_idx++) {
+    for (size_t batch_idx = 0; batch_idx < kNumBatches; ++batch_idx) {
       mini_batch_loss = 0.0;
-      for (size_t i = 0; i < kBatchSize; i++) {
+      for (size_t i = 0; i < kBatchSize; ++i) {
         // Forward pass
         c1.Forward(train_data[batch_idx * kBatchSize + i], c1_out);
         r1.Forward(c1_out, r1_out);
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 
     // Compute the training accuracy after epoch
     double correct = 0.0;
-    for (size_t i = 0; i < kTrainDataSize; i++) {
+    for (size_t i = 0; i < kTrainDataSize; ++i) {
       // Forward pass
       c1.Forward(train_data[i], c1_out);
       r1.Forward(c1_out, r1_out);
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
     // Compute validation accuracy after epoch
     epoch_loss = 0.0;
     correct = 0.0;
-    for (size_t i = 0; i < kValidDataSize; i++) {
+    for (size_t i = 0; i < kValidDataSize; ++i) {
       // Forward pass
       c1.Forward(validation_data[i], c1_out);
       r1.Forward(c1_out, r1_out);
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
     std::fstream fout("lenet_" + std::to_string(epoch) + ".csv",
                       std::ios::out);
     fout << "ImageId,Label" << std::endl;
-    for (size_t i = 0; i < kTestDataSize; i++) {
+    for (size_t i = 0; i < kTestDataSize; ++i) {
       // Forward pass
       c1.Forward(test_data[i], c1_out);
       r1.Forward(c1_out, r1_out);

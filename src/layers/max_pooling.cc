@@ -48,7 +48,7 @@ void MaxPooling::Backward(arma::cube& upstream_gradient) {
   assert(upstream_gradient.n_slices == output.n_slices);
 
   grad_input = arma::zeros(input_height, input_width, input_depth);
-  for (size_t i = 0; i < input_depth; i++) {
+  for (size_t i = 0; i < input_depth; ++i) {
     for (size_t j = 0; j + pooling_window_height <= input_height; j += vertical_stride) {
       for (size_t k = 0; k + pooling_window_width <= input_width; k += horizontal_stride) {
         arma::mat tmp(pooling_window_height, pooling_window_width, arma::fill::zeros);

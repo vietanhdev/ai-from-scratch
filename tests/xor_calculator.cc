@@ -51,13 +51,13 @@ int main(int argc, char **argv) {
   double epoch_loss = 0.0;
   double mini_batch_loss;
 
-  for (size_t epoch = 0; epoch < kEpochs; epoch++) {
+  for (size_t epoch = 0; epoch < kEpochs; ++epoch) {
     std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":"
               << std::endl;
 
-    for (size_t batch_idx = 0; batch_idx < kNumBatches; batch_idx++) {
+    for (size_t batch_idx = 0; batch_idx < kNumBatches; ++batch_idx) {
       mini_batch_loss = 0.0;
-      for (size_t i = 0; i < kBatchSize; i++) {
+      for (size_t i = 0; i < kBatchSize; ++i) {
         // Forward pass
         d1.Forward(train_data[batch_idx * kBatchSize + i], d1_out);
         s1.Forward(d1_out, s1_out);
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 
     // Compute the training accuracy after epoch
     double correct = 0.0;
-    for (size_t i = 0; i < kTrainDataSize; i++) {
+    for (size_t i = 0; i < kTrainDataSize; ++i) {
       // Forward pass
       d1.Forward(train_data[i], d1_out);
       s1.Forward(d1_out, s1_out);

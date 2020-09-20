@@ -35,14 +35,14 @@ void Dense::Forward(const arma::vec& input, arma::vec& output) {
 void Dense::Backward(arma::vec& upstream_gradient) {
   // Calculate input gradient
   grad_input = arma::zeros(num_inputs);
-  for (size_t i = 0; i < num_inputs; i++) {
+  for (size_t i = 0; i < num_inputs; ++i) {
     grad_input[i] = arma::dot(weights.col(i), upstream_gradient);
   }
   accumulated_grad_input += grad_input;
 
   // Calculate weight gradient
   grad_weights = arma::zeros(arma::size(weights));
-  for (size_t i = 0; i < grad_weights.n_rows; i++) {
+  for (size_t i = 0; i < grad_weights.n_rows; ++i) {
     grad_weights.row(i) = vectorise(input).t() * upstream_gradient[i];
   }
   accumulated_grad_weights += grad_weights;

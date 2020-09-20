@@ -20,7 +20,7 @@ class WineQualityData {
 
     std::vector<arma::vec> train_data_all;
     std::vector<arma::vec> train_labels_all;
-    for (size_t idx = 0; idx < train_data_raw.n_rows; idx++) {
+    for (size_t idx = 0; idx < train_data_raw.n_rows; ++idx) {
       arma::vec sample_vec = train_data_raw.row(idx).t();
       arma::vec features = sample_vec.subvec(0, sample_vec.n_rows - 2);
       features = arma::normalise(features);

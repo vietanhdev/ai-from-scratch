@@ -38,7 +38,6 @@ void Dropout::Forward(const arma::vec& input, arma::vec& output,
   }
 }
 
-
 arma::vec Dropout::Backward(const arma::vec& upstream_gradient) {
   arma::vec grad_input = upstream_gradient % dropout_mask;
   return grad_input;
