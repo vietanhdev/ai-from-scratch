@@ -39,8 +39,19 @@ void Dropout::Forward(const arma::vec& input, arma::vec& output,
 }
 
 
-void Dropout::Backward(const arma::vec& upstream_gradient) {
-  grad_input = upstream_gradient % dropout_mask;
+arma::vec Dropout::Backward(const arma::vec& upstream_gradient) {
+  arma::vec grad_input = upstream_gradient % dropout_mask;
+  return grad_input;
+}
+
+arma::cube Dropout::Backward(const arma::cube& upstream_gradient) {
+  size_t n_rows = upstream_gradient.n_rows;
+  size_t n_cols = upstream_gradient.n_cols;
+  size_t n_slices = upstream_gradient.n_slices;
+  arma::vec upstream_gradient_vec = DataTransformer::FlattenCube(upstream_gradient);
+  Backward(upstream_gradient_vec);
+  arma::cube grad_input = DataTransformer::VecToCube(upstream_gradient_vec, n_rows, n_cols, n_slices);
+  return grad_input;
 }
 
 }  // namespace afs

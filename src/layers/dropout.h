@@ -17,7 +17,8 @@ class Dropout {
 
   void Forward(const arma::vec& input, arma::vec& output, const DropoutMode mode = DropoutMode::kTrain);
   void Forward(const arma::cube& input, arma::cube& output, const DropoutMode mode = DropoutMode::kTrain);
-  void Backward(const arma::vec& upstream_gradient);
+  arma::vec Backward(const arma::vec& upstream_gradient);
+  arma::cube Backward(const arma::cube& upstream_gradient);
   arma::vec GetGradientWrtInput() { return grad_input; }
 
  private:

@@ -10,6 +10,7 @@
 #include "layers/max_pooling.h"
 #include "layers/relu.h"
 #include "layers/softmax.h"
+#include "layers/dropout.h"
 #include "losses/cross_entropy_loss.h"
 #include "utils/visualizer.h"
 #include "utils/data_transformer.h"
@@ -58,6 +59,8 @@ int main(int argc, char **argv) {
   Conv2D c2(12, 12, 6, 5, 5, 1, 1, 16);
   // Output is 8 x 8 x 16
 
+  Dropout c2_dropout(0.5);
+
   ReLU r2(8, 8, 16);
   // Output is 8 x 8 x 16
 
@@ -78,6 +81,7 @@ int main(int argc, char **argv) {
   arma::cube r1_out = arma::zeros(24, 24, 6);
   arma::cube mp1_out = arma::zeros(12, 12, 6);
   arma::cube c2_out = arma::zeros(8, 8, 16);
+  arma::cube c2_dropout_out;
   arma::cube r2_out = arma::zeros(8, 8, 16);
   arma::cube mp2_out = arma::zeros(4, 4, 16);
   arma::vec d_out = arma::zeros(10);
@@ -102,10 +106,10 @@ int main(int argc, char **argv) {
         r1.Forward(c1_out, r1_out);
         mp1.Forward(r1_out, mp1_out);
         c2.Forward(mp1_out, c2_out);
-        r2.Forward(c2_out, r2_out);
+        c2_dropout.Forward(c2_out, c2_dropout_out);
+        r2.Forward(c2_dropout_out, r2_out);
         mp2.Forward(r2_out, mp2_out);
         d.Forward(mp2_out, d_out);
-        d_out /= 100;
         s.Forward(d_out, s_out);
 
         // Compute the loss
@@ -127,7 +131,8 @@ int main(int argc, char **argv) {
         arma::cube grad_wrt_mp2_in = mp2.GetGradientWrtInput();
         r2.Backward(grad_wrt_mp2_in);
         arma::cube grad_wrt_r2_in = r2.GetGradientWrtInput();
-        c2.Backward(grad_wrt_r2_in);
+        arma::cube grad_wrt_c2_dropout_in = c2_dropout.Backward(grad_wrt_r2_in);
+        c2.Backward(grad_wrt_c2_dropout_in);
         arma::cube grad_wrt_c2_in = c2.GetGradientWrtInput();
         mp1.Backward(grad_wrt_c2_in);
         arma::cube grad_wrt_mp1_in = mp1.GetGradientWrtInput();
@@ -163,10 +168,10 @@ int main(int argc, char **argv) {
       r1.Forward(c1_out, r1_out);
       mp1.Forward(r1_out, mp1_out);
       c2.Forward(mp1_out, c2_out);
-      r2.Forward(c2_out, r2_out);
+      c2_dropout.Forward(c2_out, c2_dropout_out, DropoutMode::kTest);
+      r2.Forward(c2_dropout_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
       d.Forward(mp2_out, d_out);
-      d_out /= 100;
       s.Forward(d_out, s_out);
 
       if (train_labels[i].index_max() == s_out.index_max()) correct += 1.0;
@@ -184,10 +189,10 @@ int main(int argc, char **argv) {
       r1.Forward(c1_out, r1_out);
       mp1.Forward(r1_out, mp1_out);
       c2.Forward(mp1_out, c2_out);
-      r2.Forward(c2_out, r2_out);
+      c2_dropout.Forward(c2_out, c2_dropout_out, DropoutMode::kTest);
+      r2.Forward(c2_dropout_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
       d.Forward(mp2_out, d_out);
-      d_out /= 100;
       s.Forward(d_out, s_out);
 
       epoch_loss += l.Forward(s_out, validation_labels[i]);
@@ -217,10 +222,10 @@ int main(int argc, char **argv) {
       r1.Forward(c1_out, r1_out);
       mp1.Forward(r1_out, mp1_out);
       c2.Forward(mp1_out, c2_out);
-      r2.Forward(c2_out, r2_out);
+      c2_dropout.Forward(c2_out, c2_dropout_out, DropoutMode::kTest);
+      r2.Forward(c2_dropout_out, r2_out);
       mp2.Forward(r2_out, mp2_out);
       d.Forward(mp2_out, d_out);
-      d_out /= 100;
       s.Forward(d_out, s_out);
 
       fout << std::to_string(i + 1) << "," << std::to_string(s_out.index_max())

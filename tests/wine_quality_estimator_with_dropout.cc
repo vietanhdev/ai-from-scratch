@@ -93,8 +93,7 @@ int main(int argc, char **argv) {
             l.GetGradientWrtPredictedDistribution();
         d2.Backward(grad_wrt_predicted_distribution);
         arma::vec d2_grad = d2.GetGradientWrtInput();
-        s1_dropout.Backward(d2_grad);
-        arma::vec s1_dropout_grad = s1_dropout.GetGradientWrtInput();
+        arma::vec s1_dropout_grad = s1_dropout.Backward(d2_grad);
         s1.Backward(s1_dropout_grad);
         arma::vec s1_grad = s1.GetGradientWrtInput();
         d1.Backward(s1_grad);

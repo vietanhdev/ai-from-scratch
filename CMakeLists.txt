@@ -31,7 +31,11 @@ add_executable(wine_quality_estimator_with_dropout tests/wine_quality_estimator_
                 ${CC_SOURCES})
 target_link_libraries(wine_quality_estimator_with_dropout afs)
 
-add_executable(train_lenet tests/train_lenet.cc
+add_executable(digit_classifier tests/digit_classifier.cc
                 ${CC_SOURCES})
-target_link_libraries(train_lenet afs)
+target_link_libraries(digit_classifier afs)
+
+add_executable(digit_classifier_with_dropout tests/digit_classifier_with_dropout.cc
+                ${CC_SOURCES})
+target_link_libraries(digit_classifier_with_dropout afs)
 
