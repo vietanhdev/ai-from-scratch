@@ -29,7 +29,7 @@ void Dropout::Forward(const arma::vec& input, arma::vec& output,
   if (mode == DropoutMode::kTrain) {
     dropout_mask = arma::zeros(input.n_rows);
     dropout_mask = dropout_mask.imbue(
-        [&]() { return RandomGenerator::GetUniformRandom(0, 1); });
+        [&]() { return RandomGenerator::GetInstance()->GetStdUniformRandom(); });
     dropout_mask.transform([=](double val) { return val <= keep_prop ? 1 : 0; });
     dropout_mask /= keep_prop;
     output = input % dropout_mask;

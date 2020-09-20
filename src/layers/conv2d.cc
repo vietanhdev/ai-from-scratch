@@ -1,12 +1,6 @@
 #include "conv2d.h"
-
-#include <armadillo>
-#include <cassert>
-#include <cmath>
-#include <iostream>
-#include <vector>
-
 #include "utils/weight_initializer.h"
+#include "utils/random_generator.h"
 
 namespace afs {
 
