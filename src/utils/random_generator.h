@@ -20,6 +20,13 @@ class RandomGenerator {
     return d(gen);
   }
 
+  static double GetUniformRandom(double min_value, double max_value) {
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+    std::uniform_real_distribution<double> unif(min_value, max_value);
+    return unif(gen);
+  }
+
 };
 
 };  // namespace afs

@@ -10,6 +10,7 @@
 #include "datasets/wine_quality.h"
 #include "layers/dense.h"
 #include "layers/sigmoid.h"
+#include "layers/dropout.h"
 #include "losses/mse_loss.h"
 #include "utils/visualizer.h"
 #include "utils/data_transformer.h"
@@ -46,6 +47,7 @@ int main(int argc, char **argv) {
 
   Dense d1(train_data[0].n_rows, 16);
   Sigmoid s1(16);
+  Dropout s1_dropout(0.5);
   Dense d2(16, 1);
 
   MSELoss l;
@@ -54,12 +56,13 @@ int main(int argc, char **argv) {
   // of hidden layers)
   arma::vec d1_out;
   arma::vec s1_out;
+  arma::vec s1_dropout_out;
   arma::vec d2_out;
 
   // Initialize loss and cumulative loss. Cumulative loss totals loss over all
   // training examples in a minibatch.
   double loss;
-  double epoch_loss = 0.0;
+  double epoch_loss;
   double mini_batch_loss;
 
   std::vector<double> loss_history;
@@ -71,13 +74,14 @@ int main(int argc, char **argv) {
     std::cout << "*** Epoch " << epoch + 1 << "/" << kEpochs << ":"
               << std::endl;
 
-    for (size_t batch_idx = 0; batch_idx < kNumBatches; batch_idx++) {
+    for (size_t batch_idx = 0; batch_idx < kNumBatches; ++batch_idx) {
       mini_batch_loss = 0.0;
-      for (size_t i = 0; i < kBatchSize; i++) {
+      for (size_t i = 0; i < kBatchSize; ++i) {
         // Forward pass
         d1.Forward(train_data[batch_idx * kBatchSize + i], d1_out);
         s1.Forward(d1_out, s1_out);
-        d2.Forward(s1_out, d2_out);
+        s1_dropout.Forward(s1_out, s1_dropout_out);
+        d2.Forward(s1_dropout_out, d2_out);
 
         // Compute the loss
         loss = l.Forward(d2_out, train_labels[batch_idx * kBatchSize + i]);
@@ -89,7 +93,9 @@ int main(int argc, char **argv) {
             l.GetGradientWrtPredictedDistribution();
         d2.Backward(grad_wrt_predicted_distribution);
         arma::vec d2_grad = d2.GetGradientWrtInput();
-        s1.Backward(d2_grad);
+        s1_dropout.Backward(d2_grad);
+        arma::vec s1_dropout_grad = s1_dropout.GetGradientWrtInput();
+        s1.Backward(s1_dropout_grad);
         arma::vec s1_grad = s1.GetGradientWrtInput();
         d1.Backward(s1_grad);
         arma::vec d1_grad = d1.GetGradientWrtInput();
@@ -117,7 +123,8 @@ int main(int argc, char **argv) {
       // Forward pass
       d1.Forward(train_data[i], d1_out);
       s1.Forward(d1_out, s1_out);
-      d2.Forward(s1_out, d2_out);
+      s1_dropout.Forward(s1_out, s1_dropout_out, DropoutMode::kTest);
+      d2.Forward(s1_dropout_out, d2_out);
 
       if ((int)train_labels[i][0] == (int)(round(d2_out[0]))) {
         correct += 1.0;
@@ -134,7 +141,8 @@ int main(int argc, char **argv) {
       // Forward pass
       d1.Forward(validation_data[i], d1_out);
       s1.Forward(d1_out, s1_out);
-      d2.Forward(s1_out, d2_out);
+      s1_dropout.Forward(s1_out, s1_dropout_out, DropoutMode::kTest);
+      d2.Forward(s1_dropout_out, d2_out);
 
       // Compute the loss
       loss = l.Forward(d2_out, validation_labels[i]);
