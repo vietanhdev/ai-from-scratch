@@ -35,6 +35,8 @@ void Dense::Forward(const arma::vec& input, arma::vec& output) {
 void Dense::Backward(arma::vec& upstream_gradient) {
   // Calculate input gradient
   grad_input = arma::zeros(num_inputs);
+
+  #pragma omp parallel for
   for (size_t i = 0; i < num_inputs; ++i) {
     grad_input[i] = arma::dot(weights.col(i), upstream_gradient);
   }
@@ -42,6 +44,7 @@ void Dense::Backward(arma::vec& upstream_gradient) {
 
   // Calculate weight gradient
   grad_weights = arma::zeros(arma::size(weights));
+  #pragma omp parallel for
   for (size_t i = 0; i < grad_weights.n_rows; ++i) {
     grad_weights.row(i) = vectorise(input).t() * upstream_gradient[i];
   }

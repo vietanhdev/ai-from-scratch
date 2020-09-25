@@ -19,6 +19,7 @@ Conv2D::Conv2D(size_t input_height, size_t input_width, size_t input_depth,
   // Initialize the filters.
   WeightInitializer w_initializer(weight_initializer, input_depth * filter_height * filter_width);
   filters.resize(num_filters);
+  #pragma omp parallel for
   for (size_t i = 0; i < num_filters; ++i) {
     filters[i] = arma::zeros(filter_height, filter_width, input_depth);
     filters[i].imbue([&]() {
@@ -42,8 +43,11 @@ void Conv2D::Forward(arma::cube &input, arma::cube &output) {
                        num_filters);
 
   // Perform convolution for each filter
+  #pragma omp parallel for
   for (size_t i = 0; i < num_filters; ++i) {
+    #pragma omp parallel for
     for (size_t j = 0; j <= input_height - filter_height; j += vertical_stride) {
+      #pragma omp parallel for
       for (size_t k = 0; k <= input_width - filter_width; k += horizontal_stride) {
         output(j / vertical_stride, k / horizontal_stride, i) =
             arma::dot(
@@ -94,10 +98,13 @@ void Conv2D::Backward(arma::cube &upstream_gradient) {
   // Initialize the gradient wrt filters.
   grad_filters.clear();
   grad_filters.resize(num_filters);
-  for (size_t i = 0; i < num_filters; ++i)
+  #pragma omp parallel for
+  for (size_t i = 0; i < num_filters; ++i) {
     grad_filters[i] = arma::zeros(filter_height, filter_width, input_depth);
+  }
 
   // Compute the gradient wrt filters.
+  #pragma omp parallel for
   for (size_t i = 0; i < num_filters; ++i) {
     for (size_t j = 0; j < output.n_rows; ++j) {
       for (size_t k = 0; k < output.n_cols; ++k) {
@@ -112,11 +119,15 @@ void Conv2D::Backward(arma::cube &upstream_gradient) {
   }
 
   // Update the accumulated gradient wrt filters.
-  for (size_t i = 0; i < num_filters; ++i)
+  #pragma omp parallel for
+  for (size_t i = 0; i < num_filters; ++i) {
     accumulated_grad_filters[i] += grad_filters[i];
+  }
 }
 
 void Conv2D::UpdateFilterWeights(size_t batch_size, double learning_rate) {
+
+  #pragma omp parallel for
   for (size_t i = 0; i < num_filters; ++i) {
     filters[i] -= learning_rate * (accumulated_grad_filters[i] / batch_size);
   }
@@ -127,6 +138,7 @@ void Conv2D::UpdateFilterWeights(size_t batch_size, double learning_rate) {
 void Conv2D::ResetGradient() {
   accumulated_grad_filters.clear();
   accumulated_grad_filters.resize(num_filters);
+  #pragma omp parallel for
   for (size_t i = 0; i < num_filters; ++i) {
     accumulated_grad_filters[i] = arma::zeros(filter_height, filter_width, input_depth);
   }

@@ -4,6 +4,8 @@
 
 **Motivation:** I started this project to build an artifical intelligence library from scratch for educational purpose. By that way, I want to understand clearly about AI algorithms (especially machine learning, deep learning) and practice C++ programming. I made this source code public with the hope that it can help others in understanding AI. I also look forward to your comments and suggestions to improve my source code. You can contact me directly using [this contact form](https://aicurious.io/contact).
 
+This source code depends on **[Armadillo](http://arma.sourceforge.net/)** and **[OpenMP](https://www.openmp.org/)** to optimize matrix calculation.
+
 ## I. Suppported Layers
 
 Supported layers (Documentation will be available soon).
